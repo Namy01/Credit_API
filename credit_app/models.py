@@ -36,11 +36,21 @@ class Item_purchased(models.Model):
         null=True,
         blank=True,
     )
+    quantity = models.PositiveIntegerField(default=1)
     purchase_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         item_name = self.item.name if self.item else "Unknown Item"
         item_price = self.item.price if self.item else "Unknown Price"
-        return f"{item_name} purchased by {self.buyer.username} Total cost is {item_price} on {self.purchase_date:%Y-%m-%d}"
+        return f"{item_name} purchased by {self.buyer.username} Total cost is {item_price*self.quantity} on {self.purchase_date:%Y-%m-%d}"
 
 
+# class Buyer_Bill(models.Model):
+#      buyer = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.CASCADE,
+#         related_name='credit',
+#     )
+#     credit_amount = models.IntegerField(default=0)
+    
+ 
