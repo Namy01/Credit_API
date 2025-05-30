@@ -1,0 +1,15 @@
+asgiref==3.8.1
+Django==4.2.7
+djangorestframework==3.14.0
+djangorestframework_simplejwt==5.3.1
+drf-yasg
+inflection
+packaging
+psycopg2-binary
+PyJWT
+pytz
+PyYAML
+sqlparse
+tzdata
+uritemplate
+

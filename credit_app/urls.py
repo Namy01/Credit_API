@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import Show_buyers, show_item_purchased, Show_UserViewSet, RegisterView, LoginView, LogoutView, ProtectedView , ItemViewset, Show_bill, Create_buyers_credit
+from .views import Show_buyers, show_item_purchased, Show_UserViewSet, RegisterView, LoginView, ProtectedView , ItemViewset, Show_bill, Create_buyers_credit
 
 router = DefaultRouter()
 router.register(r'buyercredits', Show_buyers) 

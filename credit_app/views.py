@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.db.models import Sum
 from drf_yasg.utils import swagger_auto_schema
 from django.contrib.auth import authenticate, get_user_model
+from .helper import helper_function , helper_function2
 
 from .models import Buyer_credit, Item_purchased, Item
 from .serializers import (
@@ -32,6 +33,8 @@ def get_tokens_for_user(user):
 )
 
 
+# it shows the buyer credits to the buyer and all buyer credits to the admin user
+
 class Show_buyers(viewsets.ModelViewSet):
 
     queryset = Buyer_credit.objects.all()
@@ -40,8 +43,6 @@ class Show_buyers(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     
-
-
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
          return Buyer_credit.objects.none()
@@ -56,7 +57,12 @@ class Show_buyers(viewsets.ModelViewSet):
         if self.request.method == 'POST':
             self.permission_classes = [IsAdminUser]
         return super().get_permissions()
-   
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return helper_function2(serializer.data, request )
+
         
     
 class Create_buyers_credit(viewsets.ModelViewSet):
@@ -65,6 +71,7 @@ class Create_buyers_credit(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
     http_method_names = ['post']
 
+    
     def create(self, request, *args, **kwargs):
         
         credit_amount = request.data.get('credit_amount')
@@ -75,10 +82,12 @@ class Create_buyers_credit(viewsets.ModelViewSet):
             credit.credit_amount += int(credit_amount)
             credit.save()
             serializer = self.get_serializer(credit)
+            return helper_function(serializer.data, "success", status.HTTP_201_CREATED)
 
-            return Response(serializer.data, status= status.HTTP_200_OK )
+            
         except Buyer_credit.DoesNotExist:
             return super().create(request, *args, **kwargs)
+        
 
 
 class show_item_purchased(viewsets.ModelViewSet):
@@ -88,11 +97,6 @@ class show_item_purchased(viewsets.ModelViewSet):
     http_method_names = ['post', 'put', 'patch', 'delete', 'head', 'options']
 
 
-
-    @swagger_auto_schema(security=[{'Bearer': []}])
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
     def get_permissions(self):
         self.permission_classes = [AllowAny]
         if self.request.method == 'POST':
@@ -110,7 +114,11 @@ class show_item_purchased(viewsets.ModelViewSet):
         buyer_credit.credit_amount -= total_price
         buyer_credit.save()
 
-    
+    @swagger_auto_schema(security=[{'Bearer': []}])
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        return helper_function2(serializer, request)
+       
 
 
 #   user = self.request.user
@@ -123,8 +131,19 @@ class show_item_purchased(viewsets.ModelViewSet):
 
 class ItemViewset(viewsets.ModelViewSet):
     queryset = Item.objects.all()
-    serializer_class =  ItemSerializer
+    serializer_class = ItemSerializer
     permission_classes = [IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return helper_function2(serializer.data, request)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        return helper_function2(serializer, request)
+
+
 
 
 
@@ -132,6 +151,11 @@ class Show_UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return helper_function2(serializer.data, request)
 
 class Show_bill(viewsets.ModelViewSet):
     queryset = Item_purchased.objects.all()
@@ -146,7 +170,11 @@ class Show_bill(viewsets.ModelViewSet):
         if user.is_staff:
             return Item_purchased.objects.all()
         return Item_purchased.objects.filter(buyer = user)
-
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return helper_function2(serializer.data, request)
 
 class RegisterView(APIView):
     @swagger_auto_schema(request_body=RegisterSerializer)
@@ -157,16 +185,23 @@ class RegisterView(APIView):
             Buyer_credit.objects.create(buyer=user, credit_amount=300)
             tokens = get_tokens_for_user(user)
 
-            return Response({
-                 "id": user.id,
-                "username": user.username,
-                "is_staff": user.is_staff,
-                "user_type": user.user_type,
-                "WellCome_message": f"You are logged in {user.username}",
-                'tokens': tokens,
-                "tokens": tokens,
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # return Response({
+            #      "id": user.id,
+            #     "username": user.username,
+            #     "is_staff": user.is_staff,
+            #     "user_type": user.user_type,
+            #     "WellCome_message": f"You are logged in {user.username}",
+            #     'tokens': tokens,
+            #     "tokens": tokens,
+            # }, status=status.HTTP_201_CREATED)
+            return helper_function(serializer.data, "user registered successfully", status.HTTP_201_CREATED)
+        
+        return helper_function(serializer.errors, "user registration failed", status=status.HTTP_400_BAD_REQUEST)
+            
+    
+    
+    
+
 
 
 class LoginView(APIView):
@@ -180,17 +215,18 @@ class LoginView(APIView):
             if user:
                 tokens = get_tokens_for_user(user)
                 
-                return Response({
+                # return Response({
                     
-                "id": user.id,
-                "username": user.username,
-                "is_staff": user.is_staff,
-                "user_type": user.user_type,
-                "WellCome_message": f"You are logged in {user.username}",
-                    'tokens': tokens,
-                }, status=status.HTTP_200_OK)
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # "id": user.id,
+                # "username": user.username,
+                # "is_staff": user.is_staff,
+                # "user_type": user.user_type,
+                # "WellCome_message": f"You are logged in {user.username}",
+                #     'tokens': tokens,
+                # }, status=status.HTTP_200_OK)
+                return helper_function(tokens , " logged in " , status.HTTP_200_OK)
+            return helper_function(None, 'Invalid credentials', status.HTTP_401_UNAUTHORIZED)
+        return helper_function(serializer.errors, "Log in failed", status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
