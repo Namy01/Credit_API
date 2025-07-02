@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url;
+import os;
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,15 +97,19 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }  # as these token expires in 5 min  this customiztion is helpful
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'credit_keeper',
+#         'USER': 'namrata',
+#         'PASSWORD': 'Namrata123',
+#         'HOST': 'localhost', 
+#         'PORT': '5432',        
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'credit_keeper',
-        'USER': 'namrata',
-        'PASSWORD': 'Namrata123',
-        'HOST': 'localhost', 
-        'PORT': '5432',        
-    }
+    'default':dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 
 SWAGGER_SETTINGS = {
